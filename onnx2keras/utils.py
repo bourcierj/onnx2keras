@@ -1,5 +1,6 @@
 import numpy as np
 from tensorflow import keras
+import torch
 
 
 def is_numpy(obj):
@@ -45,6 +46,37 @@ def ensure_tf_type(obj, fake_input_layer=None, name=None):
         return lambda_layer(fake_input_layer)
     else:
         return obj
+
+
+def count_params_torch(model: torch.nn.Module, trainable_only: bool = False) -> int:
+    """Count the total number of scalars composing the parameters of PyTorch model."""
+
+    if trainable_only:
+        cond = lambda p: p.requires_grad
+    else:
+        cond = lambda p: True
+
+    return sum(p.numel() for p in model.parameters() if cond(p))
+
+
+def count_params_keras(model: keras.Model, trainable_only: bool = False) -> int:
+    # source: https://github.com/keras-team/keras/blob/master/keras/utils/layer_utils.py
+    # Adapted from keras.utils.layer_utils.layer_utils, part of the private API of keras.utils
+    """Count the total number of scalars composing the weights of Keras model."""
+
+    if trainable_only:
+        weights = model.trainable_weights
+    else:
+        weights = model.weights
+
+    unique_weights = {id(w): w for w in weights}.values()
+    # Ignore TrackableWeightHandlers, which will not have a shape defined.
+    unique_weights = [w for w in unique_weights if hasattr(w, 'shape')]
+    weight_shapes = [w.shape.as_list() for w in unique_weights]
+    standardized_weight_shapes = [
+      [0 if w_i is None else w_i for w_i in w] for w in weight_shapes
+    ]
+    return int(sum(np.prod(p) for p in standardized_weight_shapes))
 
 
 def check_torch_keras_error(model, k_model, input_np, epsilon=1e-5, change_ordering=False):
