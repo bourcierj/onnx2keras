@@ -15,9 +15,18 @@ class LayerTest(nn.Module):
 
 
 @pytest.mark.parametrize('change_ordering', [True, False])
-def test_flatten(change_ordering):
+def test_flatten_image(change_ordering):
     model = LayerTest()
     model.eval()
 
-    input_np = np.random.uniform(0, 1, (1, 1, 512))
+    input_np = np.random.uniform(0, 1, (1, 3, 224, 224))
+    error = convert_and_test(model, input_np, verbose=False, change_ordering=change_ordering)
+
+
+@pytest.mark.parametrize('change_ordering', [True, False])
+def test_flatten_vec(change_ordering):
+    model = LayerTest()
+    model.eval()
+
+    input_np = np.random.uniform(0, 1, (1, 512, 1, 1))
     error = convert_and_test(model, input_np, verbose=False, change_ordering=change_ordering)
