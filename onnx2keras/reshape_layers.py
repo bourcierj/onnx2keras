@@ -158,11 +158,14 @@ def convert_reshape(node, params, layers, lambda_func, node_name, keras_name):
                 non_batch_dims = input_1[1:]
                 if len(non_batch_dims) == 1 and non_batch_dims[0] == -1:
                     # Need to transpose the input channels-first format to get the correct result
-                    logger.info("Convert input data format to channels-first")
-                    rank = input_0.shape.rank
-                    permutation = (rank - 1,) + tuple(range(1, rank - 1))
-                    permute = keras.layers.Permute(permutation, name="%s_to_channels_first" % keras_name if keras_name is not None else None)
-                    input_0 = permute(input_0)
+                    # (this can be skipped if all non-channel dimensions are equal to 1).
+                    input_non_channels_dims = input_0.shape[2:]
+                    if not all(d == 1 for d in input_non_channels_dims):
+                        logger.info("Convert input data format to channels-first")
+                        rank = input_0.shape.rank
+                        permutation = (rank - 1,) + tuple(range(1, rank - 1))
+                        permute = keras.layers.Permute(permutation, name="%s_to_channels_first" % keras_name if keras_name is not None else None)
+                        input_0 = permute(input_0)
 
             reshape = keras.layers.Reshape(input_1[1:], name=keras_name)
             layers[node_name] = reshape(input_0)
@@ -227,12 +230,15 @@ def convert_flatten(node, params, layers, lambda_func, node_name, keras_name):
     input_0 = ensure_tf_type(layers[node.input[0]], layers[list(layers)[0]], name="%s_const" % keras_name)
 
     if params['change_ordering']:
-        # Need to transpose to channels-first format to get the correct result
-        logger.info("Convert input data format to channels-first")
-        rank = input_0.shape.rank
-        permutation = (rank - 1,) + tuple(range(1, rank - 1))
-        permute = keras.layers.Permute(permutation, name="%s_to_channels_first" % keras_name if keras_name is not None else None)
-        input_0 = permute(input_0)
+        # Need to transpose the input channels-first format to get the correct result
+        # (this can be skipped if all non-channel dimensions are equal to 1).
+        input_non_channels_dims = input_0.shape[2:]
+        if not all(d == 1 for d in input_non_channels_dims):
+            logger.info("Convert input data format to channels-first")
+            rank = input_0.shape.rank
+            permutation = (rank - 1,) + tuple(range(1, rank - 1))
+            permute = keras.layers.Permute(permutation, name="%s_to_channels_first" % keras_name if keras_name is not None else None)
+            input_0 = permute(input_0)
 
     reshape = keras.layers.Reshape((-1,), name=keras_name)
     layers[node_name] = reshape(input_0)

@@ -15,7 +15,7 @@ class LayerTest(nn.Module):
 
 
 @pytest.mark.parametrize('change_ordering', [True, False])
-def test_flatten_image(change_ordering):
+def test_flatten(change_ordering):
     model = LayerTest()
     model.eval()
 
