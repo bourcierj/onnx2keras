@@ -247,7 +247,6 @@ def convert_flatten(node, params, layers, lambda_func, node_name, keras_name):
     if len(node.input) != 1:
         raise AttributeError('Number of inputs is not equal 1 for flatten layer')
 
-    logger.debug('Convert inputs to Keras/TF layers if needed.')
     input_0 = ensure_tf_type(layers[node.input[0]], layers[list(layers)[0]], name="%s_const" % keras_name)
 
     if params['change_ordering']:
@@ -298,7 +297,6 @@ def convert_slice(node, params, layers, lambda_func, node_name, keras_name):
         else:
             raise AttributeError('Not implemented')
     else:
-        logger.debug('Convert inputs to Keras/TF layers if needed.')
         input_0 = ensure_tf_type(layers[node.input[0]], layers[list(layers)[0]], name="%s_const" % keras_name)
         layers[node_name] = input_0
 
