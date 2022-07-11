@@ -22,7 +22,6 @@ class FNormTest(nn.Module):
 
 
 # TODO: Not working with dim=[2,3] and change_ordering=False ???? error about 0.0001-0.001
-@pytest.mark.repeat(10)
 @pytest.mark.parametrize('change_ordering', [True, False])
 @pytest.mark.parametrize('dim', [[1, 2], [1, 3]])
 @pytest.mark.parametrize('epsilon', [5e-5])
