@@ -250,9 +250,16 @@ def convert_flatten(node, params, layers, lambda_func, node_name, keras_name):
     logger.debug('Convert inputs to Keras/TF layers if needed.')
     input_0 = ensure_tf_type(layers[node.input[0]], layers[list(layers)[0]], name="%s_const" % keras_name)
 
-    flatten = keras.layers.Flatten(name=keras_name)
-    layers[node_name] = flatten(input_0)
+    if params['change_ordering']:
+        # Need to transpose to channels-first format to get the correct result
+        logger.info("Convert input data format to channels-first")
+        rank = input_0.shape.rank
+        permutation = (rank - 1,) + tuple(range(1, rank - 1))
+        permute = keras.layers.Permute(permutation, name="%s_to_channels_first" % keras_name if keras_name is not None else None)
+        input_0 = permute(input_0)
 
+    reshape = keras.layers.Reshape((-1,), name=keras_name)
+    layers[node_name] = reshape(input_0)
 
 def convert_slice(node, params, layers, lambda_func, node_name, keras_name):
     """
