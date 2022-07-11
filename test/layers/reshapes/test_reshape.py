@@ -32,7 +32,8 @@ class UnflattenLayerTest(nn.Module):
         return x
 
 
-@pytest.mark.parametrize('change_ordering', [True, False])
+xfail_reason = "impossible for reshaped outputs to match between if the prediction is not done in with the same orderning"
+@pytest.mark.parametrize('change_ordering', [pytest.param(True, marks=pytest.mark.xfail(reason=xfail_reason)), False])
 def test_reshape_unflatten(change_ordering):
     model = UnflattenLayerTest()
     model.eval()
