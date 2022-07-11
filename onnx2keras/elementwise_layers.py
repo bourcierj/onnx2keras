@@ -23,7 +23,6 @@ def convert_elementwise_div(node, params, layers, lambda_func, node_name, keras_
         logger.debug('Divide numpy arrays.')
         layers[node_name] = layers[node.input[0]] / layers[node.input[1]]
     else:
-        logger.debug('Convert inputs to Keras/TF layers if needed.')
         input_0 = ensure_tf_type(layers[node.input[0]], layers[list(layers)[0]], name="%s_const1" % keras_name)
         input_1 = ensure_tf_type(layers[node.input[1]], layers[list(layers)[0]], name="%s_const2" % keras_name)
 
@@ -56,7 +55,6 @@ def convert_elementwise_add(node, params, layers, lambda_func, node_name, keras_
     if len(node.input) != 2:
         raise AttributeError('Number of inputs is not equal 2 for element-wise layer')
 
-    logger.debug('Convert inputs to Keras/TF layers if needed.')
     input_0 = ensure_tf_type(layers[node.input[0]], layers[list(layers)[0]], name="%s_const1" % keras_name)
     input_1 = ensure_tf_type(layers[node.input[1]], layers[list(layers)[0]], name="%s_const2" % keras_name)
 
@@ -100,7 +98,6 @@ def convert_elementwise_mul(node, params, layers, lambda_func, node_name, keras_
     if len(node.input) != 2:
         raise AttributeError('Number of inputs is not equal 2 for element-wise layer')
 
-    logger.debug('Convert inputs to Keras/TF layers if needed.')
     input_0 = ensure_tf_type(layers[node.input[0]], layers[list(layers)[0]], name="%s_const1" % keras_name)
     input_1 = ensure_tf_type(layers[node.input[1]], layers[list(layers)[0]], name="%s_const2" % keras_name)
 
@@ -142,7 +139,6 @@ def convert_elementwise_sub(node, params, layers, lambda_func, node_name, keras_
     if len(node.input) != 2:
         raise AttributeError('Number of inputs is not equal 2 for element-wise layer')
 
-    logger.debug('Convert inputs to Keras/TF layers if needed.')
     input_0 = ensure_tf_type(layers[node.input[0]], layers[list(layers)[0]], name="%s_const1" % keras_name)
     input_1 = ensure_tf_type(layers[node.input[1]], layers[list(layers)[0]], name="%s_const2" % keras_name)
 
