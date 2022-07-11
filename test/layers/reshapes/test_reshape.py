@@ -23,6 +23,15 @@ def test_reshape_flatten(change_ordering):
     error = convert_and_test(model, input_np, verbose=False, change_ordering=change_ordering)
 
 
+@pytest.mark.parametrize('change_ordering', [True, False])
+def test_reshape_flatten_vec(change_ordering):
+    model = FlattenLayerTest()
+    model.eval()
+
+    input_np = np.random.uniform(0, 1, (1, 512, 1, 1))
+    error = convert_and_test(model, input_np, verbose=False, change_ordering=change_ordering)
+
+
 class UnflattenLayerTest(nn.Module):
     def __init__(self):
         super(UnflattenLayerTest, self).__init__()
