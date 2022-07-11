@@ -151,8 +151,8 @@ def convert_reshape(node, params, layers, lambda_func, node_name, keras_name):
             logger.debug('The first argument is numpy array. Apply np.reshape.')
             layers[node_name] = np.reshape(input_0, np.int32(input_1))
         else:
+            input_0 = ensure_tf_type(input_0, layers[list(layers)[0]], name="%s_const" % keras_name)
             if params['change_ordering']:
-                input_0 = ensure_tf_type(layers[node.input[0]], layers[list(layers)[0]], name="%s_const" % keras_name)
 
                 # Fix critical issue with NHWC
                 if input_1[0] is None and input_1[1] == -1:
@@ -177,7 +177,6 @@ def convert_reshape(node, params, layers, lambda_func, node_name, keras_name):
                 layers[node_name] = reshape(layers[node_name])
 
             else:
-                input_0 = ensure_tf_type(layers[node.input[0]], layers[list(layers)[0]], name="%s_const" % keras_name)
                 logger.debug('The first argument is Keras/tf layer. Apply keras.Reshape.')
 
                 if len(np.int32(input_1[1:])) == 1 and np.int32(input_1[1:])[0] == -1:
