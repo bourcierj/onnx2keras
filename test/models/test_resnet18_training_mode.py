@@ -4,6 +4,7 @@ from typing import Callable
 import numpy as np
 import onnx
 import pytest
+import tensorflow as tf
 import torch
 from torch import nn
 from torchvision.models import resnet18
@@ -13,7 +14,7 @@ from onnx2keras.utils import count_params_keras, count_params_torch
 
 
 def _convert_and_test_model_training_mode(
-    model_class: Callable, include_fc: bool = True
+    model_class: Callable, include_fc: bool = True, change_ordering: bool = False
 ) -> None:
 
     # instanciate model and optionally discard fc layer
@@ -62,7 +63,6 @@ def _convert_and_test_model_training_mode(
     onnx.checker.check_model(onnx_model)
 
     # export ONNX model to TF Keras
-    change_ordering = True
     k_model = onnx_to_keras(
         onnx_model,
         input_names=input_names,
@@ -99,8 +99,11 @@ def _convert_and_test_model_training_mode(
 
     k_model.summary()
 
-
 @pytest.mark.parametrize("include_fc", [True, False])
-def test_resnet18(include_fc: bool):
+@pytest.mark.parametrize("change_ordering", [True, False])
+def test_resnet18(include_fc: bool, change_ordering: bool):
 
-    _convert_and_test_model_training_mode(resnet18, include_fc=include_fc)
+    if not tf.test.gpu_device_name() and not change_ordering:
+        pytest.skip("Skip since tensorflow Conv2D op currently only supports the NHWC tensor format on the CPU")
+
+    _convert_and_test_model_training_mode(resnet18, include_fc=include_fc, change_ordering=change_ordering)
