@@ -154,27 +154,17 @@ def convert_reshape(node, params, layers, lambda_func, node_name, keras_name):
             input_0 = ensure_tf_type(input_0, layers[list(layers)[0]], name="%s_const" % keras_name)
             if params['change_ordering']:
 
-                # Fix critical issue with NHWC
-                if input_1[0] is None and input_1[1] == -1:
-                    logger.warning('!!! IMPORTANT INFORMATION !!!')
-                    logger.warning('The target shape if [None, -1] that means flatten.')
-                    logger.warning('But the target ordering is NHWC, so we cant simply perform flatten')
-                    logger.warning('The layer will be converted as lambda with tf.transpose')
-                    logger.warning('---')
+                non_batch_dims = input_1[1:]
+                if len(non_batch_dims) == 1 and non_batch_dims[0] == -1:
+                    # Need to transpose the input channels-first format to get the correct result
+                    logger.info("Convert input data format to channels-first")
+                    rank = input_0.shape.rank
+                    permutation = (rank - 1,) + tuple(range(1, rank - 1))
+                    permute = keras.layers.Permute(permutation, name="%s_to_channels_first" % keras_name if keras_name is not None else None)
+                    input_0 = permute(input_0)
 
-                    def target_layer(x):
-                        import tensorflow as tf
-                        x = tf.transpose(x, [0, 3, 1, 2])
-                        return x
-
-                    lambda_layer = keras.layers.Lambda(target_layer, name="%s_CHW" % keras_name)
-                    layers[node_name] = lambda_layer(input_0)
-                    lambda_func[keras_name] = target_layer
-                else:
-                    layers[node_name] = input_0
-
-                reshape = keras.layers.Reshape(np.int32(input_1[1:]), name=keras_name)
-                layers[node_name] = reshape(layers[node_name])
+                reshape = keras.layers.Reshape(input_1[1:], name=keras_name)
+                layers[node_name] = reshape(input_0)
 
             else:
                 logger.debug('The first argument is Keras/tf layer. Apply keras.Reshape.')
