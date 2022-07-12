@@ -42,12 +42,12 @@ def convert_conv(node, params, layers, lambda_func, node_name, keras_name):
         logger.debug('3D convolution')
         if pads[0] > 0 or pads[1] > 0 or pads[2] > 0:
             logger.debug('Paddings exist, add ZeroPadding layer')
-            padding_name = keras_name + '_pad'
+            padding_name = keras_name + '_pad' if keras_name is not None else None
             padding_layer = keras.layers.ZeroPadding3D(
                 padding=(pads[0], pads[1], pads[2]),
                 name=padding_name
             )
-            layers[padding_name] = input_0 = padding_layer(input_0)
+            layers[padding_layer.name] = input_0 = padding_layer(input_0)
         out_channels, channels_per_group, dimension, height, width = W.shape
         W = W.transpose(2, 3, 4, 1, 0)
 
@@ -82,13 +82,13 @@ def convert_conv(node, params, layers, lambda_func, node_name, keras_name):
 
         if padding:
             logger.debug('Paddings exist, add ZeroPadding layer')
-            padding_name = keras_name + '_pad'
+            padding_name = keras_name + '_pad' if keras_name is not None else None
             padding_layer = keras.layers.ZeroPadding2D(
                 padding=padding,
                 name=padding_name,
                 data_format='channels_first'
             )
-            layers[padding_name] = input_0 = padding_layer(input_0)
+            layers[padding_layer.name] = input_0 = padding_layer(input_0)
 
         W = W.transpose(2, 3, 1, 0)
         height, width, channels_per_group, out_channels = W.shape
@@ -194,16 +194,16 @@ def convert_conv(node, params, layers, lambda_func, node_name, keras_name):
             return tf.transpose(x, [0, 2, 1])
 
         lambda_layer = keras.layers.Lambda(target_layer, name=keras_name)
-        lambda_layer[keras_name] = target_layer
         layers[node_name] = lambda_layer(input_0)
+        lambda_func[lambda_layer.name] = target_layer
 
-        # padding_name = keras_name + '_pad'
+        # padding_name = keras_name + '_pad' if keras_name is not None else None
         # padding_layer = keras.layers.ZeroPadding1D(
         #     padding=(pads[0]),
         #     name=padding_name
         # )
         # print(input_0)
-        # layers[node_name] = padding_layer(input_0)
+        # layers[padding_layer.name] = padding_layer(input_0)
         # input_0.set_shape(input_0._keras_shape)
         # print(input_0._keras_shape)
         # print(input_0, n_filters, width)
@@ -307,9 +307,10 @@ def convert_convtranspose(node, params, layers,
             logger.debug('Add cropping layer for output padding')
             assert(len(pads) == 2 or (pads[2] == pads[0] and pads[3] == pads[1]))
 
+            crop_name = keras_name + '_crop' if keras_name is not None else None
             crop = keras.layers.Cropping2D(
                 pads[:2],
-                name=keras_name + '_crop'
+                name=crop_name
             )
             layers[node_name] = crop(input_0)
     else:

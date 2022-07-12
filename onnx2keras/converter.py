@@ -43,7 +43,11 @@ def onnx_to_keras(onnx_model, input_names,
     :param onnx_model: loaded ONNX model
     :param input_names: list with input names
     :param input_shapes: override input shapes (experimental)
-    :param name_policy: override layer names. None, "short" or "renumerate" (experimental)
+    :param name_policy: override layer names. None, "short" or "renumerate", or "keras" (experimental):
+        - None uses the ONNX graph node output name.
+        - "short" takes the first 8 characters of the ONNX graph node.
+        - "renumerate" is the prefix 'LAYER_' followed by the node number in conversion order.
+        - "keras" uses Keras layer default names (with the advantage to give understandable and easy to process names).
     :param verbose: verbose output
     :param change_ordering: change ordering to HWC (experimental)
     :return: Keras model
@@ -136,6 +140,8 @@ def onnx_to_keras(onnx_model, input_names,
             elif name_policy == 'renumerate':
                 postfix = node_index if len(node.output) == 1 else "%s_%s" % (node_index, output_index)
                 keras_names.append('LAYER_%s' % postfix)
+            elif name_policy == "keras":
+                keras_names.append(None)
             else:
                 keras_names.append(output)
 

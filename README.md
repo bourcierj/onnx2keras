@@ -21,7 +21,11 @@ TensorFlow 2.0
 
 `input_shapes`: override input shapes (experimental)
 
-`name_policy`: ['renumerate', 'short', 'default'] override layer names (experimental)
+`name_policy`: override layer names. None, "short" or "renumerate", or "keras" (experimental):
+    - None uses the ONNX graph node output name.
+    - "short" takes the first 8 characters of the ONNX graph node.
+    - "renumerate" is the prefix 'LAYER_' followed by the node number in conversion order.
+    - "keras" uses Keras layer default names (with the advantage to give understandable and easy to process names).
 
 `verbose`: detailed output
 

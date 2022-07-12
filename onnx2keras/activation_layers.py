@@ -148,7 +148,7 @@ def convert_softmax(node, params, layers, lambda_func, node_name, keras_name):
     lambda_layer = keras.layers.Lambda(target_layer, name=keras_name)
     layers[node_name] = lambda_layer(input_0)
     layers[node_name].set_shape(layers[node_name].shape)
-    lambda_func[keras_name] = target_layer
+    lambda_func[lambda_layer.name] = target_layer
 
 
 def convert_prelu(node, params, layers, lambda_func, node_name, keras_name):
