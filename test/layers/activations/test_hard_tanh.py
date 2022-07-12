@@ -35,7 +35,6 @@ class FHardtanh(nn.Module):
         return F.hardtanh(x, min_val=self.min_val, max_val=self.max_val)
 
 
-@pytest.mark.repeat(10)
 @pytest.mark.parametrize('change_ordering', [True, False])
 def test_layer_hardtanh(change_ordering):
     model = LayerHardtanh()
@@ -44,7 +43,6 @@ def test_layer_hardtanh(change_ordering):
     error = convert_and_test(model, input_np, verbose=False, change_ordering=change_ordering)
 
 
-@pytest.mark.repeat(10)
 @pytest.mark.parametrize('change_ordering', [True, False])
 def test_f_hardtanh(change_ordering):
     model = LayerHardtanh()

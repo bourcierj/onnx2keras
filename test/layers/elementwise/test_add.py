@@ -15,7 +15,6 @@ class FAdd(nn.Module):
         return x
 
 
-@pytest.mark.repeat(10)
 @pytest.mark.parametrize('change_ordering', [True, False])
 def test_add(change_ordering):
     model = FAdd()

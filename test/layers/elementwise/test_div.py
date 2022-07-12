@@ -21,7 +21,6 @@ class FDiv(nn.Module):
         return x
 
 
-@pytest.mark.repeat(10)
 @pytest.mark.parametrize('change_ordering', [True, False])
 def test_div(change_ordering):
     model = FDiv()

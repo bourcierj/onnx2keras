@@ -15,7 +15,6 @@ class FMul(nn.Module):
         return x
 
 
-@pytest.mark.repeat(10)
 @pytest.mark.parametrize('change_ordering', [True, False])
 def test_mul(change_ordering):
     model = FMul()

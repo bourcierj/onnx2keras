@@ -16,7 +16,6 @@ class LayerTest(nn.Module):
         return x
 
 
-@pytest.mark.repeat(10)
 # sometimes error is a little bit greater than 1e-5
 # maybe it can be problem described here
 # https://discuss.pytorch.org/t/instance-norm-implement-by-basic-operations-has-different-result-comparing-to-torch-nn-instancenorm2d/87470/2

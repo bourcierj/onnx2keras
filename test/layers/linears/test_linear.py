@@ -17,7 +17,6 @@ class LayerTest(nn.Module):
         return x
 
 
-@pytest.mark.repeat(10)
 @pytest.mark.parametrize('change_ordering', [True, False])
 @pytest.mark.parametrize('bias', [True, False])
 def test_linear(change_ordering, bias):

@@ -33,7 +33,6 @@ class FLeakyReLU(nn.Module):
         return F.leaky_relu(x, self.negative_slope)
 
 
-@pytest.mark.repeat(10)
 @pytest.mark.parametrize('change_ordering', [True, False])
 def test_layer_leaky_relu(change_ordering):
     model = LayerLeakyReLU()
@@ -42,7 +41,6 @@ def test_layer_leaky_relu(change_ordering):
     error = convert_and_test(model, input_np, verbose=False, change_ordering=change_ordering)
 
 
-@pytest.mark.repeat(10)
 @pytest.mark.parametrize('change_ordering', [True, False])
 def test_f_leaky_relu(change_ordering):
     model = FLeakyReLU()

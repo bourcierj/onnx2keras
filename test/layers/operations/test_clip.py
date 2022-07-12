@@ -18,7 +18,6 @@ class FClipTest(nn.Module):
         return x.clamp(self.low, self.high)
 
 
-@pytest.mark.repeat(10)
 @pytest.mark.parametrize('change_ordering', [True, False])
 def test_clip(change_ordering):
     model = FClipTest()

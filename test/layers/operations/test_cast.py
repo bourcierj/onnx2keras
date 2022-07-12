@@ -17,7 +17,6 @@ class FCastTest(nn.Module):
         return x.type(torch.DoubleTensor).type(torch.BoolTensor).type(torch.uint8)
 
 
-@pytest.mark.repeat(10)
 @pytest.mark.parametrize('change_ordering', [True, False])
 def test_cast(change_ordering):
     model = FCastTest()

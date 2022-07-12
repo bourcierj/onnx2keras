@@ -33,7 +33,6 @@ class FPELU(nn.Module):
         return F.elu(x, alpha=self.alpha)
 
 
-@pytest.mark.repeat(10)
 @pytest.mark.parametrize('change_ordering', [True, False])
 def test_layer_elu(change_ordering):
     model = LayerELU()
@@ -42,7 +41,6 @@ def test_layer_elu(change_ordering):
     error = convert_and_test(model, input_np, verbose=False, change_ordering=change_ordering)
 
 
-@pytest.mark.repeat(10)
 @pytest.mark.parametrize('change_ordering', [True, False])
 def test_fp_elu(change_ordering):
     model = FPELU()
