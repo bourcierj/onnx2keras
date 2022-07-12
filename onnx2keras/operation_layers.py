@@ -35,10 +35,12 @@ def convert_clip(node, params, layers, lambda_func, node_name, keras_name):
         def target_layer(x, vmin=params['min'], vmax=params['max']):
             import tensorflow as tf
             return tf.clip_by_value(x, vmin, vmax)
+
         lambda_layer = keras.layers.Lambda(target_layer, name=keras_name)
         lambda_func[lambda_layer.name] = target_layer
+        layer = lambda_layer
 
-    layers[node_name] = lambda_layer(input_0)
+    layers[node_name] = layer(input_0)
 
 
 def convert_log(node, params, layers, lambda_func, node_name, keras_name):
