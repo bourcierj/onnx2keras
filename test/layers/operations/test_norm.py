@@ -21,16 +21,25 @@ class FNormTest(nn.Module):
         return x
 
 
-# TODO: Not working with dim=[2,3] and change_ordering=False ???? error about 0.0001-0.001
-@pytest.mark.repeat(10)
 @pytest.mark.parametrize('change_ordering', [True, False])
 @pytest.mark.parametrize('dim', [[1, 2], [1, 3]])
-@pytest.mark.parametrize('epsilon', [5e-5])
 @pytest.mark.parametrize('keepdim', [True, False])
-def test_norm(change_ordering, dim, epsilon, keepdim):
+def test_norm(change_ordering, dim, keepdim):
     model = FNormTest(dim, keepdim)
     model.eval()
 
     input_np = np.random.uniform(0, 1, (1, 3, 224, 224))
 
-    error = convert_and_test(model, input_np, verbose=False, change_ordering=change_ordering, epsilon=epsilon)
+    error = convert_and_test(model, input_np, verbose=False, change_ordering=change_ordering, epsilon=5e-5)
+
+
+@pytest.mark.parametrize('change_ordering', [True, False])
+@pytest.mark.parametrize('keepdim', [True, False])
+def test_norm_vec(change_ordering, keepdim):
+    dim = 1
+    model = FNormTest(dim, keepdim)
+    model.eval()
+
+    input_np = np.random.uniform(0, 1, (1, 512, 1, 1))
+
+    error = convert_and_test(model, input_np, verbose=False, change_ordering=change_ordering, epsilon=5e-5)
