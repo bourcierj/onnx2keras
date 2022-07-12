@@ -1,3 +1,4 @@
+import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import backend as K
 import logging
@@ -229,7 +230,7 @@ def convert_split(node, params, layers, lambda_func, node_name, keras_names):
     :param layers: available keras layers
     :param lambda_func: function for keras Lambda layer
     :param node_name: internal converter name
-    :param keras_name: resulting layer name
+    :param keras_names: resulting layer names
     :return: None
     """
     if len(node.input) != 1:
@@ -382,6 +383,33 @@ def convert_argmax(node, params, layers, lambda_func, node_name, keras_name):
     lambda_func[keras_name] = target_layer
 
 
+@keras.utils.register_keras_serializable()
+class ReduceNorm(keras.layers.Layer):
+    """Computes the norm of vectors, matrices, and tensors.
+
+    Layer that wraps `tf.norm`
+    """
+
+    def __init__(self, ord="euclidean", axis=None, keepdims=None, **kwargs):
+        super().__init__(**kwargs)
+        self.ord = ord
+        self.axis = axis
+        self.keepdims = keepdims
+        if isinstance(axis, int):
+            min_ndim = axis + 1
+        else:
+            min_ndim = max(axis) + 1
+        self.input_spec = keras.layers.InputSpec(min_ndim=min_ndim)
+
+    def call(self, inputs):
+        return tf.norm(inputs, ord=self.ord, axis=self.axis, keepdims=self.keepdims)
+
+    def get_config(self):
+        config = super().get_config()
+        config.update({"ord": self.ord, "axis": self.axis, "keepdims": self.keepdims})
+        return config
+
+
 def convert_reduce_l2(node, params, layers, lambda_func, node_name, keras_name):
     """
     Convert ReduceL2 layer
@@ -403,10 +431,5 @@ def convert_reduce_l2(node, params, layers, lambda_func, node_name, keras_name):
     if len(axis) == 1:
         axis = axis[0]
 
-    def target_layer(x, axis=axis, keepdims=keepdims):
-        import tensorflow as tf
-        return tf.norm(x, axis=axis, keepdims=keepdims)
-
-    lambda_layer = keras.layers.Lambda(target_layer, name=keras_name)
-    layers[node_name] = lambda_layer(input_0)
-    lambda_func[keras_name] = target_layer
+    reduce_norm = ReduceNorm(axis=axis, keepdims=keepdims, name=keras_name)
+    layers[node_name] = reduce_norm(input_0)
