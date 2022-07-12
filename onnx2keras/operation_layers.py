@@ -35,10 +35,10 @@ def convert_clip(node, params, layers, lambda_func, node_name, keras_name):
         def target_layer(x, vmin=params['min'], vmax=params['max']):
             import tensorflow as tf
             return tf.clip_by_value(x, vmin, vmax)
-        layer = keras.layers.Lambda(target_layer, name=keras_name)
-        lambda_func[keras_name] = target_layer
+        lambda_layer = keras.layers.Lambda(target_layer, name=keras_name)
+        lambda_func[lambda_layer.name] = target_layer
 
-    layers[node_name] = layer(input_0)
+    layers[node_name] = lambda_layer(input_0)
 
 
 def convert_log(node, params, layers, lambda_func, node_name, keras_name):
@@ -63,7 +63,7 @@ def convert_log(node, params, layers, lambda_func, node_name, keras_name):
 
     lambda_layer = keras.layers.Lambda(target_layer, name=keras_name)
     layers[node_name] = lambda_layer(input_0)
-    lambda_func[keras_name] = target_layer
+    lambda_func[lambda_layer.name] = target_layer
 
 
 def convert_exp(node, params, layers, lambda_func, node_name, keras_name):
@@ -87,7 +87,7 @@ def convert_exp(node, params, layers, lambda_func, node_name, keras_name):
 
     lambda_layer = keras.layers.Lambda(target_layer, name=keras_name)
     layers[node_name] = lambda_layer(input_0)
-    lambda_func[keras_name] = target_layer
+    lambda_func[lambda_layer.name] = target_layer
 
 
 def convert_reduce_sum(node, params, layers, lambda_func, node_name, keras_name):
@@ -115,7 +115,7 @@ def convert_reduce_sum(node, params, layers, lambda_func, node_name, keras_name)
     lambda_layer = keras.layers.Lambda(target_layer, name=keras_name)
     layers[node_name] = lambda_layer(input_0)
     layers[node_name].set_shape(layers[node_name].shape)
-    lambda_func[keras_name] = target_layer
+    lambda_func[lambda_layer.name] = target_layer
 
 
 def convert_reduce_mean(node, params, layers, lambda_func, node_name, keras_name):
@@ -141,7 +141,7 @@ def convert_reduce_mean(node, params, layers, lambda_func, node_name, keras_name
     lambda_layer = keras.layers.Lambda(target_layer, name=keras_name)
     layers[node_name] = lambda_layer(input_0)
     layers[node_name].set_shape(layers[node_name].shape)
-    lambda_func[keras_name] = target_layer
+    lambda_func[lambda_layer.name] = target_layer
 
 
 def convert_reduce_max(node, params, layers, lambda_func, node_name, keras_name):
@@ -167,7 +167,7 @@ def convert_reduce_max(node, params, layers, lambda_func, node_name, keras_name)
     lambda_layer = keras.layers.Lambda(target_layer, name=keras_name)
     layers[node_name] = lambda_layer(input_0)
     layers[node_name].set_shape(layers[node_name].shape)
-    lambda_func[keras_name] = target_layer
+    lambda_func[lambda_layer.name] = target_layer
 
 
 def convert_pow(node, params, layers, lambda_func, node_name, keras_name):
@@ -193,7 +193,7 @@ def convert_pow(node, params, layers, lambda_func, node_name, keras_name):
 
     lambda_layer = keras.layers.Lambda(target_layer, name=keras_name)
     layers[node_name] = lambda_layer(input_0)
-    lambda_func[keras_name] = target_layer
+    lambda_func[lambda_layer.name] = target_layer
 
 
 def convert_sqrt(node, params, layers, lambda_func, node_name, keras_name):
@@ -218,7 +218,7 @@ def convert_sqrt(node, params, layers, lambda_func, node_name, keras_name):
 
     lambda_layer = keras.layers.Lambda(target_layer, name=keras_name)
     layers[node_name] = lambda_layer(input_0)
-    lambda_func[keras_name] = target_layer
+    lambda_func[lambda_layer.name] = target_layer
 
 
 def convert_split(node, params, layers, lambda_func, node_name, keras_names):
@@ -254,7 +254,7 @@ def convert_split(node, params, layers, lambda_func, node_name, keras_names):
 
         lambda_layer = keras.layers.Lambda(target_layer, name=keras_names[i])
         layers[node_name] = lambda_layer(input_0)
-        lambda_func[keras_names[i]] = target_layer
+        lambda_func[lambda_layer.name] = target_layer
         cur += split
 
 
@@ -310,7 +310,7 @@ def convert_cast(node, params, layers, lambda_func, node_name, keras_name):
 
         lambda_layer = keras.layers.Lambda(target_layer, name=keras_name)
         layers[node_name] = lambda_layer(input_0)
-        lambda_func[keras_name] = target_layer
+        lambda_func[lambda_layer.name] = target_layer
 
 
 def convert_floor(node, params, layers, lambda_func, node_name, keras_name):
@@ -336,7 +336,7 @@ def convert_floor(node, params, layers, lambda_func, node_name, keras_name):
 
     lambda_layer = keras.layers.Lambda(target_layer, name=keras_name)
     layers[node_name] = lambda_layer(input_0)
-    lambda_func[keras_name] = target_layer
+    lambda_func[lambda_layer.name] = target_layer
 
 
 def convert_identity(node, params, layers, lambda_func, node_name, keras_name):
@@ -379,7 +379,7 @@ def convert_argmax(node, params, layers, lambda_func, node_name, keras_name):
 
     lambda_layer = keras.layers.Lambda(target_layer, name=keras_name)
     layers[node_name] = lambda_layer(input_0)
-    lambda_func[keras_name] = target_layer
+    lambda_func[lambda_layer.name] = target_layer
 
 
 def convert_reduce_l2(node, params, layers, lambda_func, node_name, keras_name):
@@ -409,4 +409,4 @@ def convert_reduce_l2(node, params, layers, lambda_func, node_name, keras_name):
 
     lambda_layer = keras.layers.Lambda(target_layer, name=keras_name)
     layers[node_name] = lambda_layer(input_0)
-    lambda_func[keras_name] = target_layer
+    lambda_func[lambda_layer.name] = target_layer

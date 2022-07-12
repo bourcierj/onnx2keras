@@ -208,7 +208,7 @@ def convert_unsqueeze(node, params, layers, lambda_func, node_name, keras_name):
 
         lambda_layer = keras.layers.Lambda(target_layer, name=keras_name)
         layers[node_name] = lambda_layer(layers[node.input[0]])
-        lambda_func[keras_name] = target_layer
+        lambda_func[lambda_layer.name] = target_layer
 
 
 def convert_flatten(node, params, layers, lambda_func, node_name, keras_name):
@@ -316,7 +316,7 @@ def convert_slice(node, params, layers, lambda_func, node_name, keras_name):
 
             lambda_layer = keras.layers.Lambda(target_layer, name=keras_name)
             layers[node_name] = lambda_layer(input_0)
-            lambda_func[keras_name] = target_layer
+            lambda_func[lambda_layer.name] = target_layer
         else:
             def target_layer(x, axis=axes, starts=starts, ends=ends):
                 import tensorflow as tf
@@ -331,7 +331,7 @@ def convert_slice(node, params, layers, lambda_func, node_name, keras_name):
 
             lambda_layer = keras.layers.Lambda(target_layer, name=keras_name)
             layers[node_name] = lambda_layer(input_0)
-            lambda_func[keras_name] = target_layer
+            lambda_func[lambda_layer.name] = target_layer
 
 
 def convert_squeeze(node, params, layers, lambda_func, node_name, keras_name):
@@ -356,7 +356,7 @@ def convert_squeeze(node, params, layers, lambda_func, node_name, keras_name):
 
     lambda_layer = keras.layers.Lambda(target_layer, name=keras_name)
     layers[node_name] = lambda_layer(input_0)
-    lambda_func[keras_name] = target_layer
+    lambda_func[lambda_layer.name] = target_layer
 
 
 def convert_expand(node, params, layers, lambda_func, node_name, keras_name):
@@ -395,4 +395,4 @@ def convert_expand(node, params, layers, lambda_func, node_name, keras_name):
 
     lambda_layer = keras.layers.Lambda(target_layer, name=keras_name)
     layers[node_name] = lambda_layer(input_0)
-    lambda_func[keras_name] = target_layer
+    lambda_func[lambda_layer.name] = target_layer

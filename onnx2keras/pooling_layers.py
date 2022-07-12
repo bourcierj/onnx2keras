@@ -31,7 +31,7 @@ def convert_maxpool(node, params, layers, lambda_func, node_name, keras_name):
         logger.debug('Use `same` padding parameters.')
     else:
         logger.warning('Unable to use `same` padding. Add ZeroPadding2D layer to fix shapes.')
-        padding_name = keras_name + '_pad'
+        padding_name = keras_name + '_pad' if keras_name is not None else None
         if len(kernel_shape) == 2:
             padding = None
 
@@ -45,13 +45,13 @@ def convert_maxpool(node, params, layers, lambda_func, node_name, keras_name):
                     padding=padding,
                     name=padding_name
                 )
-                layers[padding_name] = input_0 = padding_layer(input_0)
+                layers[padding_layer.name] = input_0 = padding_layer(input_0)
         else:  # 3D padding
             padding_layer = keras.layers.ZeroPadding3D(
                 padding=pads[:len(stride_shape)],
                 name=padding_name
             )
-            layers[padding_name] = input_0 = padding_layer(input_0)
+            layers[padding_layer.name] = input_0 = padding_layer(input_0)
     if len(kernel_shape) == 2:
         pooling = keras.layers.MaxPooling2D(
             pool_size=kernel_shape,
@@ -100,7 +100,7 @@ def convert_avgpool(node, params, layers, lambda_func, node_name, keras_name):
         logger.debug('Use `same` padding parameters.')
     else:
         logger.warning('Unable to use `same` padding. Add ZeroPadding2D layer to fix shapes.')
-        padding_name = keras_name + '_pad'
+        padding_name = keras_name + '_pad' if keras_name is not None else None
         if len(kernel_shape) == 2:
             padding_layer = keras.layers.ZeroPadding2D(
                 padding=pads[:len(stride_shape)],
@@ -111,7 +111,7 @@ def convert_avgpool(node, params, layers, lambda_func, node_name, keras_name):
                 padding=pads[:len(stride_shape)],
                 name=padding_name
             )
-        layers[padding_name] = input_0 = padding_layer(input_0)
+        layers[padding_layer.name] = input_0 = padding_layer(input_0)
     if len(kernel_shape) == 2:
         pooling = keras.layers.AveragePooling2D(
             pool_size=kernel_shape,
@@ -156,7 +156,7 @@ def convert_global_avg_pool(node, params, layers, lambda_func, node_name, keras_
 
         global_pool = keras.layers.GlobalAveragePooling2D(data_format='channels_first', name=keras_name)
         output_0 = global_pool(input_0)
-        reshape = keras.layers.Reshape(output_0.shape[1:] + (1, 1), name=keras_name + '_expand')
+        reshape = keras.layers.Reshape(output_0.shape[1:] + (1, 1), name=keras_name + '_expand' if keras_name is not None else None)
         output_0 = reshape(output_0)
 
     layers[node_name] = output_0

@@ -141,7 +141,7 @@ def onnx_to_keras(onnx_model, input_names,
                 postfix = node_index if len(node.output) == 1 else "%s_%s" % (node_index, output_index)
                 keras_names.append('LAYER_%s' % postfix)
             elif name_policy == "keras":
-                raise NotImplementedError("name_policy value 'keras' is not implemented")
+                keras_names.append(None)
             else:
                 keras_names.append(output)
 
