@@ -47,7 +47,7 @@ def onnx_to_keras(onnx_model, input_names,
         - None uses the ONNX graph node output name
         - "short" takes the first 8 characters of the ONNX graph node
         - "renumerate" is the prefix 'LAYER_' followed by the node number in conversion order
-        - "keras" uses Keras layer default names (not implemented)
+        - "keras" uses Keras layer default names
     :param verbose: verbose output
     :param change_ordering: change ordering to HWC (experimental)
     :return: Keras model
