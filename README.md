@@ -1,6 +1,9 @@
 # onnx2keras
 
-ONNX to Keras deep neural network converter. 
+ONNX to Keras deep neural network converter.
+
+Convert an ONNX graph to a Keras model, that (hopefully) should returns the same output(s) as the
+source model given the same input(s).
 
 [![GitHub License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Python Version](https://img.shields.io/badge/python-2.7%2C3.6-lightgrey.svg)](https://github.com/gmalivenko/onnx2keras)
