@@ -1,20 +1,25 @@
+from typing import Any, TypeVar, cast, List
+
 import numpy as np
+import tensorflow as tf
 from tensorflow import keras
 import torch
 
 
-def is_numpy(obj):
+def is_numpy(obj: Any) -> bool:
     """
     Check of the type is instance of numpy array
     :param obj: object to check
     :return: True if the object is numpy-type array.
     """
+    #@fixme: isn't ndarray a subclass of np.generic ?
     return isinstance(obj, (np.ndarray, np.generic))
 
 
-def ensure_numpy_type(obj):
+T = TypeVar('T')
+def ensure_numpy_type(obj: T) -> T:
     """
-    Raise exception if it's not a numpy
+    Raise exception if it's not a numpy object
     :param obj: object to check
     :return: numpy object
     """
@@ -24,14 +29,15 @@ def ensure_numpy_type(obj):
         raise AttributeError('Not a numpy type.')
 
 
-def ensure_tf_type(obj, fake_input_layer=None, name=None):
+def ensure_tf_type(obj: T, fake_input_layer: tf.Tensor = None, name=None):
     """
-    Convert to Keras Constant if needed
+    Convert object to TensorFlow Constant if needed
     :param obj: numpy / tf type
     :param fake_input_layer: fake input layer to add constant
-    :return: tf type
+    :return: obj as TensorFlow type
     """
     if is_numpy(obj):
+        obj = cast(np.generic, obj)
         if obj.dtype == np.int64:
             obj = np.int32(obj)
 
@@ -71,7 +77,7 @@ def count_params_keras(model: keras.Model, trainable_only: bool = False) -> int:
 
     unique_weights = {id(w): w for w in weights}.values()
     # Ignore TrackableWeightHandlers, which will not have a shape defined.
-    unique_weights = [w for w in unique_weights if hasattr(w, 'shape')]
+    unique_weights = [w for w in unique_weights if hasattr(w, 'shape')]  # type: ignore[assignment]
     weight_shapes = [w.shape.as_list() for w in unique_weights]
     standardized_weight_shapes = [
       [0 if w_i is None else w_i for w_i in w] for w in weight_shapes
@@ -79,7 +85,7 @@ def count_params_keras(model: keras.Model, trainable_only: bool = False) -> int:
     return int(sum(np.prod(p) for p in standardized_weight_shapes))
 
 
-def check_torch_keras_error(model, k_model, input_np, epsilon=1e-5, change_ordering=False):
+def check_torch_keras_error(model: torch.nn.Module, k_model: keras.Model, input_np: np.ndarray, epsilon: float = 1e-5, change_ordering: bool = False) -> float:
     """
     Check difference between Torch and Keras models
     :param model: torch model
@@ -90,7 +96,6 @@ def check_torch_keras_error(model, k_model, input_np, epsilon=1e-5, change_order
     :return: actual difference
     """
     from torch.autograd import Variable
-    import torch
 
     initial_keras_image_format = keras.backend.image_data_format()
 
@@ -116,7 +121,7 @@ def check_torch_keras_error(model, k_model, input_np, epsilon=1e-5, change_order
             axes = list(range(len(i.shape)))
             axes = axes[0:1] + axes[2:] + axes[1:2]
             _input_np.append(np.transpose(i, axes))
-        input_np = _input_np
+        input_np = _input_np  # type: ignore[assignment]
 
         # run keras model
         keras_output = k_model.predict(input_np)
@@ -143,7 +148,7 @@ def check_torch_keras_error(model, k_model, input_np, epsilon=1e-5, change_order
     keras.backend.set_image_data_format(initial_keras_image_format)
 
     # assert outputs are all close up to an absolute tolerance
-    max_error = 0
+    max_error = 0.0
     for p, k in zip(pytorch_output, keras_output):
         # assert shapes are the same
         assert p.shape == k.shape
@@ -153,4 +158,4 @@ def check_torch_keras_error(model, k_model, input_np, epsilon=1e-5, change_order
         if error > max_error:
             max_error = error
 
-    return max_error
+    return float(max_error)

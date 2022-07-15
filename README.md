@@ -1,6 +1,9 @@
 # onnx2keras
 
-ONNX to Keras deep neural network converter. 
+ONNX to Keras deep neural network converter.
+
+Convert an ONNX graph to a Keras model, that (hopefully) should returns the same output(s) as the
+source model given the same input(s).
 
 [![GitHub License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Python Version](https://img.shields.io/badge/python-2.7%2C3.6-lightgrey.svg)](https://github.com/gmalivenko/onnx2keras)
@@ -13,23 +16,20 @@ TensorFlow 2.0
 
 ## API
 
-`onnx_to_keras(onnx_model, input_names, input_shapes=None, name_policy=None, verbose=True, change_ordering=False) -> {Keras model}`
+*function* `onnx_to_keras(onnx_model: onnx.ModelProto, input_names: Sequence[str], input_shapes: Sequence[Tuple[Optional[int]]] = None, name_policy: str = None, verbose: bool = True, change_ordering: bool = False) -> tf.keras.Model`
 
-`onnx_model`: ONNX model to convert
-
-`input_names`: list with graph input names
-
-`input_shapes`: override input shapes (experimental)
-
-`name_policy`: override layer names. None, "short" or "renumerate", or "keras" (experimental):
-    - None uses the ONNX graph node output name.
-    - "short" takes the first 8 characters of the ONNX graph node.
-    - "renumerate" is the prefix 'LAYER_' followed by the node number in conversion order.
-    - "keras" uses Keras layer default names (with the advantage to give understandable and easy to process names).
-
-`verbose`: detailed output
-
-`change_ordering:` change ordering to HWC (experimental)
+>   Convert an ONNX graph to a Keras model.
+>   * `onnx_model`: loaded ONNX model
+>   * `input_names`: input names, optional
+>   * `input_shapes`: input shapes to override (experimental)
+>   * `name_policy`: override layer names. None, "short" or "renumerate", or "keras" (experimental):
+>       - None uses the ONNX graph node output name.
+>       - "short" takes the first 8 characters of the ONNX graph node.
+>       - "renumerate" is the prefix 'LAYER_' followed by the node number in conversion order.
+>       - "keras" uses Keras layers default names (with the advantage to give understandable and easy to process names).
+>   * `verbose`: verbose output
+>   * `change_ordering`: change tensor dimensions ordering, from channels-first (batch, channels, ...) to channels-last (batch, ..., channels).
+>           True should be considered experimental; it applies manual tweaks for certain layers to (hopefully) get the same output at the end.
 
 
 ## Getting started
@@ -46,7 +46,7 @@ onnx_model = onnx.load('resnet18.onnx')
 k_model = onnx_to_keras(onnx_model, ['input'])
 ```
 
-Keras model will be stored to the `k_model` variable. So simple, isn't it?
+The converted Keras model will be stored to the `k_model` variable. So simple, isn't it?
 
 
 ### PyTorch model
@@ -78,9 +78,9 @@ if __name__ == '__main__':
         print('error -- ', error)  # Around zero :)
 ```
 
-### Deplying model as frozen graph
+### Deploying model as frozen graph
 
-You can try using the snippet below to convert your onnx / PyTorch model to frozen graph. It may be useful for deploy for Tensorflow.js / for Tensorflow for Android / for Tensorflow C-API.
+You can try using the snippet below to convert your ONNX / PyTorch model to frozen graph. It may be useful for deploy for TensorFlow.js / for TensorFlow for Android / for TensorFlow C-API.
 
 ```python
 import numpy as np
@@ -90,6 +90,7 @@ from torch.autograd import Variable
 import tensorflow as tf
 from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2
 
+from my_module import Model  # your torch.nn.Module model
 
 # Create and load model
 model = Model()
@@ -136,6 +137,12 @@ tf.io.write_graph(graph_or_graph_def=frozen_func.graph,
                   name="frozen_graph.pb",
                   as_text=False)
 ```
+
+## Troubleshooting
+
+### Model loading in different environment raises error
+
+Todo...
 
 
 ## License

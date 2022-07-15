@@ -1,30 +1,34 @@
 """
-The ONNX to keras converter module
+The ONNX to Keras converter module
 """
-
-from tensorflow import keras
+from typing import List, Dict, Tuple, Callable, Collection, Sequence, Any, Optional, cast
 import logging
 import inspect
 import collections
-from onnx import numpy_helper
+
+import tensorflow as tf
+from tensorflow import keras
+import onnx
+import onnx.numpy_helper
+import numpy as np
 
 from .layers import AVAILABLE_CONVERTERS
 
 
-def onnx_node_attributes_to_dict(args):
+def onnx_node_attributes_to_dict(args: Collection[onnx.AttributeProto]) -> Dict[str, Any]:
     """
     Parse ONNX attributes to Python dictionary
     :param args: ONNX attributes object
-    :return: Python dictionary
+    :return: Python dictionary of attributes names mapped to processed values
     """
-    def onnx_attribute_to_dict(onnx_attr):
+    def onnx_attribute_to_dict(onnx_attr: onnx.AttributeProto) -> Any:
         """
         Parse ONNX attribute
         :param onnx_attr: ONNX attribute
         :return: Python data type
         """
         if onnx_attr.HasField('t'):
-            return numpy_helper.to_array(getattr(onnx_attr, 't'))
+            return onnx.numpy_helper.to_array(getattr(onnx_attr, 't'))
 
         for attr_type in ['f', 'i', 's']:
             if onnx_attr.HasField(attr_type):
@@ -36,21 +40,21 @@ def onnx_node_attributes_to_dict(args):
     return {arg.name: onnx_attribute_to_dict(arg) for arg in args}
 
 
-def onnx_to_keras(onnx_model, input_names,
-                  input_shapes=None, name_policy=None, verbose=True, change_ordering=False):
+def onnx_to_keras(onnx_model: onnx.ModelProto, input_names: Sequence[str],
+                  input_shapes: Sequence[Tuple[Optional[int]]] = None, name_policy: str = None, verbose: bool = True, change_ordering: bool = False) -> keras.Model:
     """
-    Convert ONNX graph to Keras model format
+    Convert an ONNX graph to a Keras model.
     :param onnx_model: loaded ONNX model
-    :param input_names: list with input names
-    :param input_shapes: override input shapes (experimental)
+    :param input_names: input names, optional
+    :param input_shapes: input shapes to override (experimental)
     :param name_policy: override layer names. None, "short" or "renumerate", or "keras" (experimental):
         - None uses the ONNX graph node output name.
         - "short" takes the first 8 characters of the ONNX graph node.
         - "renumerate" is the prefix 'LAYER_' followed by the node number in conversion order.
-        - "keras" uses Keras layer default names (with the advantage to give understandable and easy to process names).
+        - "keras" uses Keras layers default names (with the advantage to give understandable and easy to process names).
     :param verbose: verbose output
-    :param change_ordering: change ordering to HWC (experimental)
-    :return: Keras model
+    :param change_ordering: change tensor dimensions ordering, from channels-first (batch, channels, ...) to channels-last (batch, ..., channels).
+        True should be considered experimental; it applies manual tweaks for certain layers to (hopefully) get the same output at the end.
     """
     # Use channels first format by default.
     keras_fmt = keras.backend.image_data_format()
@@ -63,7 +67,7 @@ def onnx_to_keras(onnx_model, input_names,
 
     logger.info('Converter is called.')
 
-    onnx_weights = onnx_model.graph.initializer
+    onnx_weights = onnx_model.graph.initializer  # collection of TensorProto weights in onnx model graph
     onnx_inputs = onnx_model.graph.input
     onnx_outputs = [i.name for i in onnx_model.graph.output]
     onnx_nodes = onnx_model.graph.node
@@ -80,26 +84,26 @@ def onnx_to_keras(onnx_model, input_names,
         logger.debug('Output {0} -> {1}.'.format(i, output))
 
     logger.debug('Gathering weights to dictionary.')
-    weights = {}
+    weights: Dict[str, np.ndarray] = {}  # dictionary mapping weight names to values as numpy arrays
     for onnx_w in onnx_weights:
         try:
             if len(onnx_w.ListFields()) < 4:
                 onnx_extracted_weights_name = onnx_w.ListFields()[1][1]
             else:
                 onnx_extracted_weights_name = onnx_w.ListFields()[2][1]
-            weights[onnx_extracted_weights_name] = numpy_helper.to_array(onnx_w)
+            weights[onnx_extracted_weights_name] = onnx.numpy_helper.to_array(onnx_w)
         except:
             onnx_extracted_weights_name = onnx_w.ListFields()[3][1]
-            weights[onnx_extracted_weights_name] = numpy_helper.to_array(onnx_w)
+            weights[onnx_extracted_weights_name] = onnx.numpy_helper.to_array(onnx_w)
 
         logger.debug('Found weight {0} with shape {1}.'.format(
                      onnx_extracted_weights_name,
                      weights[onnx_extracted_weights_name].shape))
 
-    layers = dict()
-    lambda_funcs = dict()
-    keras_outputs = []
-    keras_inputs = []
+    layers: Dict[str, tf.Tensor] = dict()  # dictionary that maps layers/nodes names to their output
+    lambda_funcs: Dict[str, Callable] = dict()  # dictionary that maps layers/nodes names of Lambda layers to the function wrapped in the `Lambda` layer
+    keras_outputs: List[tf.Tensor] = []  # list of output tensors of the model/graph
+    keras_inputs: List[tf.Tensor] = []  # list of input tensors of the model/graph
 
     for i, input_name in enumerate(input_names):
         for onnx_i in onnx_inputs:
@@ -118,20 +122,22 @@ def onnx_to_keras(onnx_model, input_names,
                 logger.debug('Found input {0} with shape {1}'.format(input_name, input_shape))
 
     # Convert every operation separable
-    node_names = []
+    node_names: List[str] = []  # list of layers/node names in order of conversion
     for node_index, node in enumerate(onnx_nodes):
-        node_type = node.op_type
-        node_params = onnx_node_attributes_to_dict(node.attribute)
+        node_type: str = node.op_type
+        node_params: Dict[str, Any] = onnx_node_attributes_to_dict(node.attribute)
 
         # Add global converter info:
         node_params['change_ordering'] = change_ordering
         node_params['name_policy'] = name_policy
 
-        node_name = str(node.output[0])
-        keras_names = []
+        node_name: str = str(node.output[0])
+        keras_names: List[Optional[str]] = []
+        output: str
         for output_index, output in enumerate(node.output):
             if name_policy == 'short':
-                keras_name = keras_name_i = str(output)[:8]
+                #@todo: use `keras.backend.unique_object_name(output, zero_based=True)
+                keras_name = keras_name_i = output[:8]
                 suffix = 1
                 while keras_name_i in node_names:
                     keras_name_i = keras_name + '_' + str(suffix)
@@ -143,6 +149,7 @@ def onnx_to_keras(onnx_model, input_names,
             elif name_policy == "keras":
                 keras_names.append(None)
             else:
+                #@todo: verify that `output` is unique within the ONNX graph
                 keras_names.append(output)
 
         if len(node.output) != 1:
@@ -150,6 +157,7 @@ def onnx_to_keras(onnx_model, input_names,
             node_params['_outputs'] = list(node.output)
             node_names.extend(keras_names)
         else:
+            keras_names = cast(str, keras_names)
             keras_names = keras_names[0]
             node_names.append(keras_names)
 
@@ -179,6 +187,8 @@ def onnx_to_keras(onnx_model, input_names,
             logger.debug('... found all, continue')
 
         keras.backend.set_image_data_format('channels_first')
+
+        # Convert ONNX node to Keras layer -> populate the `layers` and `lambda_funcs` dicts
         AVAILABLE_CONVERTERS[node_type](
             node,
             node_params,
@@ -210,7 +220,6 @@ def onnx_to_keras(onnx_model, input_names,
             -1: 1
         }
 
-        import numpy as np
         conf = model.get_config()
 
         for layer in conf['layers']:
@@ -228,6 +237,7 @@ def onnx_to_keras(onnx_model, input_names,
                         ]), -1
                     ))
             if layer['config'] and 'target_shape' in layer['config']:
+                #@fixme: transposing `target_shape` in a possibly incorrect way
                 if len(list(layer['config']['target_shape'][1:][:])) > 0:
                     layer['config']['target_shape'] = \
                         tuple(np.reshape(np.array(
@@ -246,8 +256,9 @@ def onnx_to_keras(onnx_model, input_names,
 
         for layer in conf['layers']:
             if 'function' in layer['config'] and layer['config']['function'][1] is not None:
-                kerasf = list(layer['config']['function'])
-                dargs = list(kerasf[1])
+                # lambda layers with custom functions that have arguments
+                kerasf = list(layer['config']['function'])  # function config
+                dargs = list(kerasf[1])  # function arguments' list (except first arg, i.e. input tensor)
                 func = lambda_funcs.get(layer['name'])
 
                 if func:
@@ -256,6 +267,7 @@ def onnx_to_keras(onnx_model, input_names,
                     # that why we handle collections.Iterable
                     if len(dargs) > 1 or isinstance(dargs[0], (tuple, list)):
                         params = inspect.signature(func).parameters
+                        # if has parameter named 'axes', change value format from NCHW to NHWC
                         i = list(params.keys()).index('axes') if ('axes' in params) else -1
 
                         if i > 0:
@@ -264,6 +276,7 @@ def onnx_to_keras(onnx_model, input_names,
                             axes = axes[0:1] + axes[2:] + axes[1:2]
                             dargs[i] = np.transpose(dargs[i], axes)
 
+                        # if has parameter named 'axis', change value format from NCHW to NHWC
                         i = list(params.keys()).index('axis') if ('axis' in params) else -1
 
                         if i > 0:
@@ -273,13 +286,16 @@ def onnx_to_keras(onnx_model, input_names,
                             # to list because some tf operations check only for core python types (e.g tf.norm)
                             dargs[i] = axes_map[axis].tolist()
                     else:
-                        # if map exits will change else will remain the same
+                        # if map exists will change else will remain the same
+                        #@fixme: this assumes that `dargs[0]` represents an axis, but it could be
+                        # anything else, if it's anything else we should not change its value !
                         dargs[0] = change_ord_axes_map.get(dargs[0], dargs[0])
 
                 kerasf[1] = tuple(dargs)
                 layer['config']['function'] = tuple(kerasf)
 
         keras.backend.set_image_data_format('channels_last')
+
         model_tf_ordering = keras.models.Model.from_config(conf)
 
         for dst_layer, src_layer, conf in zip(model_tf_ordering.layers, model.layers, conf['layers']):
