@@ -26,7 +26,7 @@ TensorFlow 2.0
 >       - None uses the ONNX graph node output name.
 >       - "short" takes the first 8 characters of the ONNX graph node.
 >       - "renumerate" is the prefix 'LAYER_' followed by the node number in conversion order.
->       - "keras" uses Keras layer default names (with the advantage to give understandable and easy to process names).
+>       - "keras" uses Keras layers default names (with the advantage to give understandable and easy to process names).
 >   * `verbose`: verbose output
 >   * `change_ordering`: change tensor dimensions ordering, from channels-first (batch, channels, ...) to channels-last (batch, ..., channels).
 >           True should be considered experimental; it applies manual tweaks for certain layers to (hopefully) get the same output at the end.
@@ -46,7 +46,7 @@ onnx_model = onnx.load('resnet18.onnx')
 k_model = onnx_to_keras(onnx_model, ['input'])
 ```
 
-Keras model will be stored to the `k_model` variable. So simple, isn't it?
+The converted Keras model will be stored to the `k_model` variable. So simple, isn't it?
 
 
 ### PyTorch model
@@ -78,9 +78,9 @@ if __name__ == '__main__':
         print('error -- ', error)  # Around zero :)
 ```
 
-### Deplying model as frozen graph
+### Deploying model as frozen graph
 
-You can try using the snippet below to convert your onnx / PyTorch model to frozen graph. It may be useful for deploy for Tensorflow.js / for Tensorflow for Android / for Tensorflow C-API.
+You can try using the snippet below to convert your ONNX / PyTorch model to frozen graph. It may be useful for deploy for TensorFlow.js / for TensorFlow for Android / for TensorFlow C-API.
 
 ```python
 import numpy as np
