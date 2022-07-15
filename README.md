@@ -90,6 +90,7 @@ from torch.autograd import Variable
 import tensorflow as tf
 from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2
 
+from my_module import Model  # your torch.nn.Module model
 
 # Create and load model
 model = Model()
