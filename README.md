@@ -16,23 +16,20 @@ TensorFlow 2.0
 
 ## API
 
-`onnx_to_keras(onnx_model, input_names, input_shapes=None, name_policy=None, verbose=True, change_ordering=False) -> {Keras model}`
+*function* `onnx_to_keras(onnx_model: onnx.ModelProto, input_names: Sequence[str], input_shapes: Sequence[Tuple[Optional[int]]] = None, name_policy: str = None, verbose: bool = True, change_ordering: bool = False) -> tf.keras.Model`
 
-`onnx_model`: ONNX model to convert
-
-`input_names`: list with graph input names
-
-`input_shapes`: override input shapes (experimental)
-
-`name_policy`: override layer names. None, "short" or "renumerate", or "keras" (experimental):
-    - None uses the ONNX graph node output name.
-    - "short" takes the first 8 characters of the ONNX graph node.
-    - "renumerate" is the prefix 'LAYER_' followed by the node number in conversion order.
-    - "keras" uses Keras layer default names (with the advantage to give understandable and easy to process names).
-
-`verbose`: detailed output
-
-`change_ordering:` change ordering to HWC (experimental)
+>   Convert an ONNX graph to a Keras model.
+>   * `onnx_model`: loaded ONNX model
+>   * `input_names`: input names, optional
+>   * `input_shapes`: input shapes to override (experimental)
+>   * `name_policy`: override layer names. None, "short" or "renumerate", or "keras" (experimental):
+>       - None uses the ONNX graph node output name.
+>       - "short" takes the first 8 characters of the ONNX graph node.
+>       - "renumerate" is the prefix 'LAYER_' followed by the node number in conversion order.
+>       - "keras" uses Keras layer default names (with the advantage to give understandable and easy to process names).
+>   * `verbose`: verbose output
+>   * `change_ordering`: change tensor dimensions ordering, from channels-first (batch, channels, ...) to channels-last (batch, ..., channels).
+>           True should be considered experimental; it applies manual tweaks for certain layers to (hopefully) get the same output at the end.
 
 
 ## Getting started
