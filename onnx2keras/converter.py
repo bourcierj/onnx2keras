@@ -13,7 +13,7 @@ import onnx.numpy_helper
 import numpy as np
 
 from .layers import AVAILABLE_CONVERTERS
-
+from .exceptions import LambdaLayerError
 
 def onnx_node_attributes_to_dict(args: Collection[onnx.AttributeProto]) -> Dict[str, Any]:
     """
@@ -40,8 +40,13 @@ def onnx_node_attributes_to_dict(args: Collection[onnx.AttributeProto]) -> Dict[
     return {arg.name: onnx_attribute_to_dict(arg) for arg in args}
 
 
-def onnx_to_keras(onnx_model: onnx.ModelProto, input_names: Sequence[str],
-                  input_shapes: Sequence[Tuple[Optional[int]]] = None, name_policy: str = None, verbose: bool = True, change_ordering: bool = False) -> keras.Model:
+def onnx_to_keras(onnx_model: onnx.ModelProto,
+                  input_names: Sequence[str],
+                  input_shapes: Sequence[Tuple[Optional[int]]] = None,
+                  name_policy: str = None,
+                  verbose: bool = True,
+                  change_ordering: bool = False,
+                  raise_error_on_lambda_layers: bool = False) -> keras.Model:
     """
     Convert an ONNX graph to a Keras model.
     :param onnx_model: loaded ONNX model
@@ -55,6 +60,10 @@ def onnx_to_keras(onnx_model: onnx.ModelProto, input_names: Sequence[str],
     :param verbose: verbose output
     :param change_ordering: change tensor dimensions ordering, from channels-first (batch, channels, ...) to channels-last (batch, ..., channels).
         True should be considered experimental; it applies manual tweaks for certain layers to (hopefully) get the same output at the end.
+    :param raise_error_on_lambda_layers: raise an error if the obtained Keras model is composed of at least one `tf.keras.layers.Lambda` layer.
+        Use this as a sanity check if you intend to load the converted Keras model in a different environment; indeed, deserializing a model
+        with `Lambda` layers in a different environment where it was saved will results in an error when calling it. This is a limitation of `Lambda`
+        layers, ((according to Keras docs on Lambda layer)[https://keras.io/api/layers/core_layers/lambda/]).
     """
     # Use channels first format by default.
     keras_fmt = keras.backend.image_data_format()
@@ -308,5 +317,13 @@ def onnx_to_keras(onnx_model: onnx.ModelProto, input_names: Sequence[str],
         model = model_tf_ordering
 
     keras.backend.set_image_data_format(keras_fmt)
+
+    if raise_error_on_lambda_layers:
+        logger.debug("Raise an exception on the first Lambda layer found")
+        for layer in model.layers:
+            if isinstance(layer, keras.layers.Lambda):
+                raise LambdaLayerError(layer)
+
+        logger.debug("Them model does not contain any Lambda layer")
 
     return model
