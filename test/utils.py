@@ -23,6 +23,16 @@ def torch2keras(model: torch.nn.Module, input_variable, keras_input_shapes=None,
     return k_model
 
 
+def convert(model: torch.nn.Module,
+            input_variable,
+            keras_input_shapes=None,
+            name_policy=None,
+            verbose=True,
+            change_ordering=False):
+    #@todo: add type hints and docstring
+    return torch2keras(model, input_variable, keras_input_shapes=keras_input_shapes, name_policy=name_policy, verbose=verbose, change_ordering=change_ordering)
+
+
 def convert_and_test(model: torch.nn.Module,
                      input_variable,
                      verbose=True,
