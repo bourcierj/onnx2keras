@@ -35,9 +35,12 @@ def convert(model: torch.nn.Module,
 
 def convert_and_test(model: torch.nn.Module,
                      input_variable,
+                     keras_input_shapes=None,
+                     name_policy=None,
                      verbose=True,
                      change_ordering=False,
                      epsilon=1e-5):
-    k_model = torch2keras(model, input_variable, verbose=verbose, change_ordering=change_ordering)
+    k_model = torch2keras(model, input_variable, keras_input_shapes=keras_input_shapes, name_policy=name_policy, verbose=verbose, change_ordering=change_ordering)
+
     error = check_torch_keras_error(model, k_model, input_variable, change_ordering=change_ordering, epsilon=epsilon)
     return error
