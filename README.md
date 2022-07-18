@@ -16,7 +16,7 @@ TensorFlow 2.0
 
 ## API
 
-*function* `onnx_to_keras(onnx_model: onnx.ModelProto, input_names: Sequence[str], input_shapes: Sequence[Tuple[Optional[int]]] = None, name_policy: str = None, verbose: bool = True, change_ordering: bool = False) -> tf.keras.Model`
+*function* `onnx_to_keras(onnx_model: onnx.ModelProto, input_names: Sequence[str], input_shapes: Sequence[Tuple[Optional[int]]] = None, name_policy: str = None, verbose: bool = True, change_ordering: bool = False, raise_error_on_lambda_layers: bool = False) -> tf.keras.Model`
 
 >   Convert an ONNX graph to a Keras model.
 >   * `onnx_model`: loaded ONNX model
@@ -30,6 +30,10 @@ TensorFlow 2.0
 >   * `verbose`: verbose output
 >   * `change_ordering`: change tensor dimensions ordering, from channels-first (batch, channels, ...) to channels-last (batch, ..., channels).
 >           True should be considered experimental; it applies manual tweaks for certain layers to (hopefully) get the same output at the end.
+>   * `raise_error_on_lambda_layers`: raise an error if the obtained Keras model is composed of at least one `tf.keras.layers.Lambda` layer.
+        Use this as a sanity check if you intend to load the converted Keras model in a different environment; indeed, deserializing a model
+        with `Lambda` layers in a different environment where it was saved will results in an error when calling it. This is a limitation of `Lambda`
+        layers, (according to [Keras docs on Lambda layer](https://keras.io/api/layers/core_layers/lambda/)).
 
 
 ## Getting started
